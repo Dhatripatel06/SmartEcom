@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import EmptyState from '@/components/EmptyState';
+import EmptyState, { EmptyProducts } from '@/components/EmptyState';
 import ProductForm from '@/components/ProductForm';
+import { useToast } from '@/hooks/useToast';
+import { TableSkeleton, ProductCardSkeleton } from '@/components/Skeletons';
 
 interface Product {
   _id: string;
@@ -22,6 +24,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [error, setError] = useState('');
+  const { success, error: showError, ToastContainer } = useToast();
 
   useEffect(() => {
     fetchProducts();
@@ -53,22 +56,35 @@ export default function ProductsPage() {
   };
 
   const handleCreateProduct = async (formData: FormData) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch('/api/products', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData,
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-    if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.error || 'Failed to create product');
-    }
 
-    await fetchProducts();
-    setShowForm(false);
+      if (!response.ok) {
+        if (data.errors) {
+          // Show validation errors
+          const errorMessages = data.errors.map((e: any) => e.message).join(', ');
+          showError(errorMessages);
+        } else {
+          showError(data.error || 'Failed to create product');
+        }
+        throw new Error(data.error || 'Failed to create product');
+      }
+
+      success('Product created successfully!');
+      await fetchProducts();
+      setShowForm(false);
+    } catch (err: any) {
+      throw err;
+    }
   };
 
   const handleUpdateProduct = async (formData: FormData) => {

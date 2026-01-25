@@ -4,6 +4,7 @@ import Product from '@/models/Product';
 import Category from '@/models/Category';
 import { authenticateToken } from '@/lib/authMiddleware';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { validateProduct, ValidationException } from '@/lib/validation';
 
 // GET: Fetch all products
 export async function GET(request: NextRequest) {
@@ -67,24 +68,20 @@ export async function POST(request: NextRequest) {
     const stock = formData.get('stock') as string;
     const imageFile = formData.get('image') as File;
 
-    // Validation
-    if (!name || name.trim() === '') {
-      return NextResponse.json(
-        { error: 'Product name is required' },
-        { status: 400 }
-      );
-    }
+    // Validate product data
+    const validationErrors = validateProduct({
+      name,
+      price: parseFloat(price),
+      stock: parseInt(stock),
+      categoryId,
+    });
 
-    if (!price || parseFloat(price) < 0) {
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { error: 'Valid product price is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!categoryId) {
-      return NextResponse.json(
-        { error: 'Category is required' },
+        { 
+          error: 'Validation failed',
+          errors: validationErrors,
+        },
         { status: 400 }
       );
     }

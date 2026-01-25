@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Category from '@/models/Category';
 import { authenticateToken } from '@/lib/authMiddleware';
+import { validateCategory } from '@/lib/validation';
 
 // GET: Fetch all categories
 export async function GET(request: NextRequest) {
@@ -45,9 +46,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description } = body;
 
-    if (!name || name.trim() === '') {
+    // Validate category data
+    const validationErrors = validateCategory({ name, description });
+
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { error: 'Category name is required' },
+        { 
+          error: 'Validation failed',
+          errors: validationErrors,
+        },
         { status: 400 }
       );
     }
