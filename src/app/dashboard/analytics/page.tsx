@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-text-primary">Advanced Analytics</h1>
+        <h1 className="text-xl sm:text-xl font-bold text-text-primary">Advanced Analytics</h1>
         <p className="text-text-secondary mt-1">Comprehensive insights and data visualization</p>
       </div>
 
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"

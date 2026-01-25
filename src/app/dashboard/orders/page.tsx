@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { EmptyOrders } from '@/components/EmptyState';
+import { useToast } from '@/hooks/useToast';
+import { TableSkeleton } from '@/components/Skeletons';
 
 interface OrderProduct {
   productId: {
@@ -29,6 +32,7 @@ export default function OrdersPage() {
   const [error, setError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const { success, error: showError, ToastContainer } = useToast();
 
   useEffect(() => {
     fetchOrders();
@@ -80,6 +84,8 @@ export default function OrdersPage() {
 
       const updatedOrder = await response.json();
       
+      success('Order status updated successfully!');
+      
       // Update orders list
       setOrders(orders.map(order => 
         order._id === orderId ? updatedOrder : order
@@ -91,7 +97,7 @@ export default function OrdersPage() {
       }
     } catch (err: any) {
       console.error('Error updating order:', err);
-      alert('Failed to update order status: ' + err.message);
+      showError('Failed to update order status: ' + err.message);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -129,13 +135,11 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-text-secondary">Loading orders...</p>
-          </div>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl sm:text-xl font-bold">Orders</h1>
         </div>
+        <TableSkeleton rows={6} />
       </div>
     );
   }
@@ -143,7 +147,7 @@ export default function OrdersPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-2">Orders</h1>
+        <h1 className="text-xl sm:text-xl font-bold text-text-primary mb-2">Orders</h1>
         <p className="text-text-secondary">Manage and track customer orders</p>
       </div>
 
@@ -211,8 +215,8 @@ export default function OrdersPage() {
             <tbody className="bg-white divide-y divide-border">
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-text-secondary">
-                    No orders found
+                  <td colSpan={7} className="p-0">
+                    <EmptyOrders />
                   </td>
                 </tr>
               ) : (
@@ -384,6 +388,8 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+      
+      <ToastContainer />
     </div>
   );
 }

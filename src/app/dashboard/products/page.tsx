@@ -90,22 +90,34 @@ export default function ProductsPage() {
   const handleUpdateProduct = async (formData: FormData) => {
     if (!editingProduct) return;
 
-    const token = localStorage.getItem('token');
-    const response = await fetch(`/api/products/${editingProduct._id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData,
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/products/${editingProduct._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-    if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.error || 'Failed to update product');
-    }
 
-    await fetchProducts();
-    setEditingProduct(null);
+      if (!response.ok) {
+        if (data.errors) {
+          const errorMessages = data.errors.map((e: any) => e.message).join(', ');
+          showError(errorMessages);
+        } else {
+          showError(data.error || 'Failed to update product');
+        }
+        throw new Error(data.error || 'Failed to update product');
+      }
+
+      success('Product updated successfully!');
+      await fetchProducts();
+      setEditingProduct(null);
+    } catch (err: any) {
+      throw err;
+    }
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -121,12 +133,13 @@ export default function ProductsPage() {
       });
 
       if (response.ok) {
+        success('Product deleted successfully!');
         await fetchProducts();
       } else {
-        alert('Failed to delete product');
+        showError('Failed to delete product');
       }
     } catch (error) {
-      alert('Failed to delete product');
+      showError('Failed to delete product');
     }
   };
 
@@ -139,11 +152,11 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="mt-4 text-text-secondary">Loading products...</p>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Products</h1>
         </div>
+        <TableSkeleton rows={5} />
       </div>
     );
   }
@@ -273,7 +286,7 @@ export default function ProductsPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Products</h1>
+          <h1 className="text-xl sm:text-xl font-bold text-text-primary">Products</h1>
           <p className="text-text-secondary mt-1">Manage your product catalog</p>
         </div>
         <button
@@ -310,15 +323,7 @@ export default function ProductsPage() {
       </div>
 
       {products.length === 0 ? (
-        <div className="bg-bg-card rounded-lg border border-border-light shadow-sm">
-          <EmptyState
-            icon="📦"
-            title="No products yet"
-            description="Start building your product catalog by adding your first product. You can manage inventory, pricing, and product details here."
-            actionLabel="Add First Product"
-            onAction={() => setShowForm(true)}
-          />
-        </div>
+        <EmptyProducts />
       ) : (
         <div className="bg-bg-card rounded-lg border border-border-light shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -406,6 +411,8 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+      
+      <ToastContainer />
     </div>
   );
 }

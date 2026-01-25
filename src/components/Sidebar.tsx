@@ -15,6 +15,7 @@ const menuItems: MenuItem[] = [
   { label: 'Categories', href: '/dashboard/categories', icon: '📁' },
   { label: 'Orders', href: '/dashboard/orders', icon: '🛒' },
   { label: 'Customers', href: '/dashboard/customers', icon: '👥' },
+  { label: 'Users', href: '/dashboard/users', icon: '👤' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: '📈' },
   { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
 ];

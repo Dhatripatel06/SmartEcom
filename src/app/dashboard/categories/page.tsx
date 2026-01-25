@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { EmptyCategories } from '@/components/EmptyState';
+import { useToast } from '@/hooks/useToast';
+import { TableSkeleton } from '@/components/Skeletons';
 
 interface Category {
   _id: string;
@@ -16,6 +19,7 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [error, setError] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
+  const { success, error: showError, ToastContainer } = useToast();
 
   useEffect(() => {
     fetchCategories();
@@ -69,15 +73,25 @@ export default function CategoriesPage() {
       });
 
       if (response.ok) {
+        success('Category created successfully!');
         setFormData({ name: '', description: '' });
         setShowForm(false);
         await fetchCategories();
       } else {
         const data = await response.json();
-        setError(data.error || 'Failed to create category');
+        if (data.errors) {
+          const errorMessages = data.errors.map((e: any) => e.message).join(', ');
+          showError(errorMessages);
+          setError(errorMessages);
+        } else {
+          showError(data.error || 'Failed to create category');
+          setError(data.error || 'Failed to create category');
+        }
       }
     } catch (error) {
-      setError('Failed to create category');
+      const msg = 'Failed to create category';
+      showError(msg);
+      setError(msg);
     } finally {
       setSubmitLoading(false);
     }
@@ -85,11 +99,11 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="mt-4 text-text-secondary">Loading categories...</p>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl sm:text-xl font-bold">Categories</h1>
         </div>
+        <TableSkeleton rows={4} />
       </div>
     );
   }
@@ -98,7 +112,7 @@ export default function CategoriesPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Categories</h1>
+          <h1 className="text-xl sm:text-xl font-bold text-text-primary">Categories</h1>
           <p className="text-text-secondary mt-1">Manage product categories</p>
         </div>
         <button
@@ -179,17 +193,7 @@ export default function CategoriesPage() {
       </div>
 
       {categories.length === 0 ? (
-        <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-12 text-center">
-          <div className="text-7xl mb-4 opacity-50">📁</div>
-          <h3 className="text-xl font-semibold text-text-primary mb-2">No categories yet</h3>
-          <p className="text-text-secondary mb-6">Create your first category to organize your products</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            Create First Category
-          </button>
-        </div>
+        <EmptyCategories />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => (
@@ -210,6 +214,8 @@ export default function CategoriesPage() {
           ))}
         </div>
       )}
+      
+      <ToastContainer />
     </div>
   );
 }

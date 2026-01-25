@@ -38,6 +38,82 @@ A professional, production-ready admin dashboard for managing e-commerce operati
 - **Dashboard Integration** - Order statistics and revenue tracking
 - **Professional Admin UI** - Clean table layout with status badges
 
+### Week 5 - Analytics & Dashboard ✅
+- **MongoDB Aggregations** - Real-time data from database
+  - Total products count
+  - Total orders count
+  - Total revenue calculation (sum of all orders)
+  - Monthly sales breakdown (revenue + orders per month)
+  - Order status distribution (pending/shipped/delivered)
+  - Top products by quantity sold
+  - Recent orders feed
+- **Recharts Integration** - Interactive data visualization
+  - Bar Chart: Monthly revenue trends
+  - Line Chart: Sales performance over time
+  - Pie Chart: Order status breakdown
+- **Advanced Analytics Page** - Dedicated `/dashboard/analytics` route
+  - Multiple chart types for comprehensive insights
+  - Real-time data updates from MongoDB
+  - Professional gradient cards for key metrics
+- **Dashboard Stats** - Live statistics cards
+  - Inventory value calculation
+  - Stock level monitoring
+  - Order pipeline tracking
+
+### Week 6 - Production Polish ✅
+- **Backend Validation**
+  - Comprehensive validation utilities (`src/lib/validation.ts`)
+  - Product validation: name (3-100 chars), price (0-1M), stock (≥0)
+  - Category validation: name (2-50 chars), description (<500 chars)
+  - Order validation: customer info, products array, total amount
+  - User validation: email format, password strength (≥6 chars)
+  - Structured error responses with field-level details
+- **Frontend Validation & Feedback**
+  - Toast notification system (success/error/info/warning)
+  - Custom `useToast` hook for easy integration
+  - Form validation with inline error messages
+  - Loading states on all submit buttons
+  - Disabled inputs during processing
+- **Loading States**
+  - Skeleton loaders for all data-heavy pages
+  - TableSkeleton, CardSkeleton, ChartSkeleton components
+  - Smooth pulse animations
+  - Content-aware placeholders
+- **Empty States**
+  - Enhanced with SVG icons and CTAs
+  - Specific variants: EmptyProducts, EmptyCategories, EmptyOrders
+  - Actionable next steps for users
+  - Professional empty state design
+- **UI Polish**
+  - Custom CSS animations (slide-in, pulse-subtle)
+  - Consistent transitions (200-300ms)
+  - Hover effects and scale animations
+  - Mobile-first responsive design
+  - Consistent color palette (#4F8CFF primary, #6C7CFF secondary)
+- **Code Quality**
+  - TypeScript strict mode
+  - No console.logs in production code
+  - Reusable component library
+  - DRY principles applied
+  - Production-ready error handling
+
+### Week 7 - Users Management ✅
+- **User CRUD API** - Complete user management endpoints
+  - GET /api/users - List all users (JWT protected)
+  - GET /api/users/[id] - Get single user
+  - PUT /api/users/[id] - Update user role (admin/staff)
+  - DELETE /api/users/[id] - Delete user
+- **Users Admin Page** - `/dashboard/users`
+  - View all registered users
+  - Role management (admin/staff)
+  - User statistics (total, admins, staff)
+  - Delete users functionality
+  - Real-time role updates
+- **Role-Based Access** - User model includes role field
+  - Admin role for full permissions
+  - Staff role for basic access
+  - Dropdown role selector in UI
+
 ## 📋 Prerequisites
 
 - Node.js 18+ installed
@@ -90,6 +166,34 @@ npm run dev
 ```
 
 Visit: [http://localhost:3000](http://localhost:3000)
+
+## 🌱 Database Seeding
+
+**Quick Start with Test Data:**
+
+```bash
+# Install dependencies (if not already done)
+npm install
+
+# Run the seed script
+npm run seed
+```
+
+This will populate your database with:
+- ✅ **3 Users** (1 admin + 2 staff)
+- ✅ **4 Categories** (Electronics, Fashion, Home & Kitchen, Books)
+- ✅ **12 Products** (with realistic prices and stock)
+- ✅ **8 Orders** (with various statuses and dates)
+
+**Test Login Credentials:**
+```
+Email: admin@smartecom.com
+Password: admin123
+```
+
+📚 **Full Documentation:** See [src/scripts/README.md](src/scripts/README.md) for detailed seed script documentation.
+
+⚠️ **Note:** The seed script clears existing data before seeding. Only use in development!
 
 ## 📁 Project Structure
 
@@ -209,7 +313,8 @@ smart-ecom/
 {
   name: string (required)
   email: string (required, unique)
-  password: string (required, hashed)
+  password: string (required, hashed with bcrypt)
+  role: enum ['admin', 'staff'] (default: 'staff')
   createdAt: Date
 }
 ```
@@ -303,10 +408,203 @@ This script:
 - Shows summary with revenue totals
 
 ### Manual Testing Flow
-1. **Signup/Login** - Create account and authenticate
-2. **Add Category** - Navigate to Categories, create test category
-3. **Add Product** - Create product with image upload
-4. **View Dashboard** - Check real-time stats update
-5. **Run Seed Script** - Generate sample orders
-6. **Manage Orders** - Change order status, view details
-7. **Verify Stats** - Dashboard reflects all changes
+1. **Run Seed Script** - `npm run seed` to populate database with test data
+2. **Signup/Login** - Use `admin@smartecom.com / admin123` or create new account
+3. **View Dashboard** - Check real-time stats (should show seeded data)
+4. **Browse Products** - See 12 seeded products across 4 categories
+5. **Manage Orders** - View 8 seeded orders, change statuses
+6. **Test CRUD** - Create, edit, delete products/categories
+7. **Analytics** - View charts with real seeded data
+8. **Manage Users** - View users list, update roles (admin/staff)
+
+**💡 Tip:** Run `npm run seed` anytime to reset database to clean state with fresh test data.
+
+## 🚀 Deployment (Vercel)
+
+### Prerequisites
+- GitHub account with project repository
+- Vercel account (free tier available at [vercel.com](https://vercel.com))
+- MongoDB Atlas cluster (production database)
+
+### Step 1: Prepare MongoDB Atlas for Production
+
+1. **Login to MongoDB Atlas** ([cloud.mongodb.com](https://cloud.mongodb.com))
+2. **Create Production Cluster** (if not exists)
+   - Choose region closest to Vercel deployment
+   - Select M0 Sandbox (free tier) or paid tier
+3. **Configure Network Access**
+   - Go to "Network Access" → "Add IP Address"
+   - Select "Allow Access from Anywhere" (0.0.0.0/0)
+   - This is required for Vercel serverless functions
+4. **Get Connection String**
+   - Go to "Database" → "Connect" → "Connect your application"
+   - Copy connection string (e.g., `mongodb+srv://username:password@cluster.mongodb.net/smart-ecom`)
+   - Replace `<password>` with your actual password
+
+### Step 2: Deploy to Vercel
+
+#### Option A: Vercel Dashboard (Recommended)
+
+1. **Push Code to GitHub**
+   ```bash
+   git add .
+   git commit -m "Ready for deployment"
+   git push origin main
+   ```
+
+2. **Import Project on Vercel**
+   - Visit [vercel.com/new](https://vercel.com/new)
+   - Click "Import Project"
+   - Select your GitHub repository
+   - Click "Import"
+
+3. **Configure Environment Variables**
+   - In "Environment Variables" section, add:
+   ```
+   MONGODB_URI = mongodb+srv://username:password@cluster.mongodb.net/smart-ecom
+   JWT_SECRET = your-production-secret-minimum-32-characters-long
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME = your_cloud_name
+   CLOUDINARY_API_KEY = your_api_key
+   CLOUDINARY_API_SECRET = your_api_secret
+   ```
+   - **IMPORTANT**: Use a strong, unique JWT_SECRET for production
+   - Generate with: `openssl rand -base64 32`
+
+4. **Deploy**
+   - Click "Deploy"
+   - Wait 2-3 minutes for build completion
+   - Your app will be live at `https://your-project.vercel.app`
+
+#### Option B: Vercel CLI
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy
+vercel
+
+# Add environment variables
+vercel env add MONGODB_URI
+vercel env add JWT_SECRET
+vercel env add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+vercel env add CLOUDINARY_API_KEY
+vercel env add CLOUDINARY_API_SECRET
+
+# Deploy to production
+vercel --prod
+```
+
+### Step 3: Post-Deployment Configuration
+
+1. **Test Authentication**
+   - Visit your deployed URL
+   - Create a new account via `/signup`
+   - Login and verify JWT token works
+   - Check MongoDB Atlas to confirm user was created
+
+2. **Upload Test Data**
+   - Create categories
+   - Upload products with images
+   - Generate test orders
+   - Verify all CRUD operations work
+
+3. **Configure Custom Domain** (Optional)
+   - Go to Vercel Dashboard → Project Settings → Domains
+   - Add custom domain (e.g., `admin.yourdomain.com`)
+   - Update DNS records as instructed
+   - SSL certificate auto-generated
+
+### Step 4: Continuous Deployment
+
+Vercel automatically redeploys on every push to `main` branch:
+
+```bash
+# Make changes
+git add .
+git commit -m "Update feature"
+git push origin main
+# Vercel auto-deploys in 2-3 minutes
+```
+
+### Environment Variables Reference
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `MONGODB_URI` | ✅ Yes | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/smart-ecom` |
+| `JWT_SECRET` | ✅ Yes | Secret key for JWT signing (32+ chars) | `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6` |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | ✅ Yes | Cloudinary cloud name | `your-cloud-name` |
+| `CLOUDINARY_API_KEY` | ✅ Yes | Cloudinary API key | `123456789012345` |
+| `CLOUDINARY_API_SECRET` | ✅ Yes | Cloudinary API secret | `abcdefghijklmnopqrstuvwxy` |
+
+### Troubleshooting Deployment
+
+**Build Fails:**
+- Check build logs in Vercel dashboard
+- Ensure all dependencies in `package.json`
+- Verify TypeScript has no errors: `npm run build` locally
+
+**Database Connection Fails:**
+- Verify MongoDB Atlas IP whitelist (0.0.0.0/0)
+- Check connection string is correct
+- Ensure user has read/write permissions
+
+**Images Not Uploading:**
+- Verify all Cloudinary environment variables set
+- Check API key permissions in Cloudinary dashboard
+- Test upload locally first
+
+**Authentication Not Working:**
+- Ensure JWT_SECRET is set and strong
+- Check browser console for CORS errors
+- Verify token is stored in localStorage
+
+## 📸 Screenshots
+
+### Landing Page
+![Landing Page](./screenshots/landing.png)
+
+### Dashboard
+![Dashboard](./screenshots/dashboard.png)
+
+### Products Management
+![Products](./screenshots/products.png)
+
+### Orders Management
+![Orders](./screenshots/orders.png)
+
+### Analytics
+![Analytics](./screenshots/analytics.png)
+
+### Users Management
+![Users](./screenshots/users.png)
+
+> **Note**: Add screenshots to `/screenshots` folder in project root
+
+## 🎯 Project Completion Checklist
+
+✅ **Week 1** - Landing page, Login/Signup UI, Dashboard layout  
+✅ **Week 2** - Authentication API, JWT, Protected routes, MongoDB users  
+✅ **Week 3** - Products & Categories CRUD, Image upload, Real data  
+✅ **Week 4** - Orders CRUD, Status updates, Customer info, Real data  
+✅ **Week 5** - Analytics API, Real stats, Charts (Recharts), Dashboard  
+✅ **Week 6** - Validation, Error handling, Loading states, UI polish  
+✅ **Week 7** - Users management, Role-based access  
+
+## 📄 License
+
+This project is created for educational purposes as part of an academic assignment.
+
+## 👨‍💻 Developer
+
+Developed by [Your Name]  
+GitHub: [github.com/Dhatripatel06/SmartEcom](https://github.com/Dhatripatel06/SmartEcom)  
+Contact: dhatripatel67@gmail.com
+
+---
+
+**Status**: Production Ready ✅  
+**Last Updated**: January 25, 2026

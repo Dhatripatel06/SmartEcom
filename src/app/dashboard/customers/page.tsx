@@ -1,3 +1,5 @@
+'use client';
+
 import EmptyState from '@/components/EmptyState';
 
 export default function CustomersPage() {
@@ -5,14 +7,20 @@ export default function CustomersPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Customers</h1>
+          <h1 className="text-xl sm:text-xl font-bold text-text-primary">Customers</h1>
           <p className="text-text-secondary mt-1">Manage your customer database</p>
         </div>
         <div className="flex gap-2 sm:gap-3">
-          <button className="px-4 py-2 bg-bg-card border border-border-light text-text-primary rounded-lg font-medium hover:bg-bg-hover transition-all duration-200 text-sm sm:text-base">
+          <button 
+            onClick={() => alert('Export functionality coming soon!')}
+            className="px-4 py-2 bg-bg-card border border-border-light text-text-primary rounded-lg font-medium hover:bg-bg-hover transition-all duration-200 text-sm sm:text-base"
+          >
             Export List
           </button>
-          <button className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap text-sm sm:text-base">
+          <button 
+            onClick={() => alert('Add customer functionality coming soon!')}
+            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all duration-200 hover:scale-105 active:scale-95 whitespace-nowrap text-sm sm:text-base"
+          >
             + Add Customer
           </button>
         </div>
@@ -43,7 +51,7 @@ export default function CustomersPage() {
           title="No customers yet"
           description="Your customer database is empty. Add customers manually or they will be automatically added when they make their first purchase."
           actionLabel="Add First Customer"
-          onAction={() => console.log('Add customer')}
+          onAction={() => alert('Add customer functionality coming soon!')}
         />
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { StatsGridSkeleton, ChartSkeleton } from '@/components/Skeletons';
 
 interface StatCardProps {
   title: string;
@@ -168,10 +169,16 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="mt-4 text-text-secondary">Loading dashboard...</p>
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-xl sm:text-xl font-bold">Dashboard</h1>
+          <p className="text-gray-300 mt-1">Loading your data...</p>
+        </div>
+        <StatsGridSkeleton count={4} />
+        <ChartSkeleton height={300} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton height={250} />
+          <ChartSkeleton height={250} />
         </div>
       </div>
     );
@@ -188,7 +195,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Analytics Dashboard</h1>
+        <h1 className="text-xl sm:text-xl font-bold text-text-primary">Dashboard</h1>
         <p className="text-text-secondary mt-1">Real-time insights from your e-commerce data</p>
       </div>
 
