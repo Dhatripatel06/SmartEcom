@@ -1,0 +1,10 @@
+{
+  "json.schemaDownload.enable": true,
+  "json.maxItemsComputed": 5000,
+  "[json]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace"
+  }
+}

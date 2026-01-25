@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface StatCardProps {
   title: string;
@@ -43,6 +44,9 @@ interface DashboardStats {
   };
   orders: {
     total: number;
+    pending: number;
+    shipped: number;
+    delivered: number;
   };
   revenue: {
     total: number;
@@ -52,35 +56,113 @@ interface DashboardStats {
   };
 }
 
+interface MonthlySale {
+  year: number;
+  month: number;
+  monthName: string;
+  revenue: number;
+  orders: number;
+}
+
+interface RecentOrder {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+  products: any[];
+}
+
+interface TopProduct {
+  _id: string;
+  name: string;
+  totalQuantity: number;
+  orderCount: number;
+}
+
+interface AnalyticsData {
+  overview: {
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+  };
+  monthlySales: MonthlySale[];
+  recentOrders: RecentOrder[];
+  statusBreakdown: {
+    pending: number;
+    shipped: number;
+    delivered: number;
+  };
+  topProducts: TopProduct[];
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchDashboardStats();
+    fetchData();
   }, []);
 
-  const fetchDashboardStats = async () => {
+  const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/dashboard/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      
+      // Fetch both stats and analytics in parallel
+      const [statsResponse, analyticsResponse] = await Promise.all([
+        fetch('/api/dashboard/stats', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch('/api/analytics', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        })
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
+      if (statsResponse.ok && analyticsResponse.ok) {
+        const statsData = await statsResponse.json();
+        const analyticsData = await analyticsResponse.json();
+        setStats(statsData.stats);
+        setAnalytics(analyticsData.analytics);
       } else {
-        setError('Failed to fetch dashboard statistics');
+        setError('Failed to fetch dashboard data');
       }
     } catch (error) {
-      setError('Failed to fetch dashboard statistics');
+      setError('Failed to fetch dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'shipped':
+        return 'bg-blue-100 text-blue-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -95,7 +177,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (error || !stats) {
+  if (error || !stats || !analytics) {
     return (
       <div className="bg-red-50 border border-red-200 text-error px-4 py-3 rounded-lg">
         {error || 'Failed to load dashboard data'}
@@ -106,36 +188,166 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Dashboard Overview</h1>
-        <p className="text-text-secondary mt-1">Welcome back! Here's what's happening today.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Analytics Dashboard</h1>
+        <p className="text-text-secondary mt-1">Real-time insights from your e-commerce data</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
           title="Total Products"
-          value={stats.products.total}
-          change={stats.products.total > 0 ? `${stats.products.inStock} in stock` : 'No products yet'}
-          changeType={stats.products.total > 0 ? 'positive' : 'neutral'}
+          value={analytics.overview.totalProducts}
+          change={`${stats.products.inStock} in stock`}
+          changeType="positive"
           icon="📦"
         />
         <StatCard
           title="Total Orders"
-          value={stats.orders.total}
-          change={stats.orders.total > 0 ? 'Active orders' : 'No orders yet'}
-          changeType={stats.orders.total > 0 ? 'positive' : 'neutral'}
+          value={analytics.overview.totalOrders}
+          change={`${analytics.statusBreakdown.pending} pending`}
+          changeType="positive"
           icon="🛒"
         />
         <StatCard
-          title="Inventory Value"
-          value={`$${stats.inventory.totalValue.toFixed(2)}`}
-          change={`${stats.products.total} total products`}
-          changeType={stats.inventory.totalValue > 0 ? 'positive' : 'neutral'}
+          title="Total Revenue"
+          value={formatCurrency(analytics.overview.totalRevenue)}
+          change={`${analytics.statusBreakdown.delivered} delivered`}
+          changeType="positive"
           icon="💰"
+        />
+        <StatCard
+          title="Inventory Value"
+          value={formatCurrency(stats.inventory.totalValue)}
+          change={`${stats.products.total} products`}
+          changeType="positive"
+          icon="📊"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="lg:col-span-2 bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
+      {/* Sales Chart */}
+      <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Monthly Revenue</h2>
+        {analytics.monthlySales.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={analytics.monthlySales}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="monthName" 
+                stroke="#6B7280"
+                style={{ fontSize: '12px' }}
+              />
+              <YAxis 
+                stroke="#6B7280"
+                style={{ fontSize: '12px' }}
+                tickFormatter={(value) => `$${value}`}
+              />
+              <Tooltip 
+                formatter={(value: any) => [`$${value.toFixed(2)}`, 'Revenue']}
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Bar dataKey="revenue" fill="#4F8CFF" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-64 text-text-secondary">
+            No sales data available yet
+          </div>
+        )}
+      </div>
+
+      {/* Recent Orders and Top Products */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Recent Orders */}
+        <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-text-primary">Recent Orders</h2>
+            <button
+              onClick={() => router.push('/dashboard/orders')}
+              className="text-sm text-primary hover:text-secondary font-medium"
+            >
+              View All →
+            </button>
+          </div>
+          {analytics.recentOrders.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.recentOrders.map((order) => (
+                <div
+                  key={order._id}
+                  className="flex items-center justify-between p-3 bg-bg-alt rounded-lg hover:bg-bg-hover transition-colors cursor-pointer"
+                  onClick={() => router.push('/dashboard/orders')}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      {order.customerName}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {formatDate(order.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-text-primary">
+                      {formatCurrency(order.totalAmount)}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-text-secondary">
+              No recent orders
+            </div>
+          )}
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">Top Products</h2>
+          {analytics.topProducts.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.topProducts.map((product, index) => (
+                <div
+                  key={product._id}
+                  className="flex items-center justify-between p-3 bg-bg-alt rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">
+                        {product.name}
+                      </p>
+                      <p className="text-xs text-text-secondary">
+                        {product.orderCount} orders
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-text-primary">
+                      {product.totalQuantity} sold
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-text-secondary">
+              No product data available
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-text-primary mb-4">Inventory Status</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-bg-alt rounded-lg">
@@ -163,60 +375,60 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">Quick Actions</h2>
-          <div className="space-y-2">
-            <button
-              onClick={() => router.push('/dashboard/products')}
-              className="w-full text-left px-4 py-3 bg-bg-selected text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
-            >
-              ➕ Add New Product
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/products')}
-              className="w-full text-left px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
-            >
-              📦 View All Products
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/categories')}
-              className="w-full text-left px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
-            >
-              📁 Manage Categories
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/orders')}
-              className="w-full text-left px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
-            >
-              📋 View Orders
-            </button>
+          <h2 className="text-lg font-semibold text-text-primary mb-4">Order Status</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-bg-alt rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Pending Orders</p>
+                <p className="text-xs text-text-secondary mt-1">Awaiting processing</p>
+              </div>
+              <span className="text-2xl font-bold text-warning">{stats.orders.pending}</span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-bg-alt rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Shipped Orders</p>
+                <p className="text-xs text-text-secondary mt-1">In transit</p>
+              </div>
+              <span className="text-2xl font-bold text-blue-600">{stats.orders.shipped}</span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-bg-alt rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Delivered Orders</p>
+                <p className="text-xs text-text-secondary mt-1">Completed</p>
+              </div>
+              <span className="text-2xl font-bold text-success">{stats.orders.delivered}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">System Status</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Database', status: 'Connected', type: 'success' },
-            { label: 'Product API', status: 'Operational', type: 'success' },
-            { label: 'Category API', status: 'Operational', type: 'success' },
-            { label: 'Authentication', status: 'Active', type: 'success' },
-          ].map((item, index) => {
-            const statusColor = {
-              success: 'bg-green-100 text-success',
-              warning: 'bg-yellow-100 text-warning',
-              error: 'bg-red-100 text-error',
-            }[item.type];
-
-            return (
-              <div key={index} className="flex flex-col items-center p-4 border border-border-subtle rounded-lg">
-                <span className="text-sm text-text-primary font-medium mb-2">{item.label}</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                  {item.status}
-                </span>
-              </div>
-            );
-          })}
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
+            onClick={() => router.push('/dashboard/products')}
+            className="text-center px-4 py-3 bg-bg-selected text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
+          >
+            ➕ Add New Product
+          </button>
+          <button
+            onClick={() => router.push('/dashboard/products')}
+            className="text-center px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
+          >
+            📦 View All Products
+          </button>
+          <button
+            onClick={() => router.push('/dashboard/categories')}
+            className="text-center px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
+          >
+            📁 Manage Categories
+          </button>
+          <button
+            onClick={() => router.push('/dashboard/orders')}
+            className="text-center px-4 py-3 bg-bg-alt text-text-primary rounded-lg hover:bg-bg-hover transition-all duration-200 font-medium hover:scale-[1.02] active:scale-[0.98]"
+          >
+            📋 View Orders
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Product from '@/models/Product';
+import Order from '@/models/Order';
 import { authenticateToken } from '@/lib/authMiddleware';
 
 // GET: Fetch dashboard statistics
@@ -27,9 +28,15 @@ export async function GET(request: NextRequest) {
     const products = await Product.find({});
     const totalInventoryValue = products.reduce((sum, product) => sum + (product.price * product.stock), 0);
 
-    // Placeholder values for orders and revenue (to be implemented in Week 4)
-    const totalOrders = 0;
-    const totalRevenue = 0;
+    // Get order statistics
+    const totalOrders = await Order.countDocuments();
+    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    const shippedOrders = await Order.countDocuments({ status: 'shipped' });
+    const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
+    
+    // Calculate total revenue from delivered orders
+    const orders = await Order.find({});
+    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
 
     return NextResponse.json({
       success: true,
@@ -42,6 +49,9 @@ export async function GET(request: NextRequest) {
         },
         orders: {
           total: totalOrders,
+          pending: pendingOrders,
+          shipped: shippedOrders,
+          delivered: deliveredOrders,
         },
         revenue: {
           total: totalRevenue,

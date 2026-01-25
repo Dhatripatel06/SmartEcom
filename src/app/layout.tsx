@@ -4,6 +4,9 @@ import '../styles/globals.css';
 export const metadata: Metadata = {
   title: 'SmartEcom Admin Dashboard',
   description: 'Professional e-commerce admin panel',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
