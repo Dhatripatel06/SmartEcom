@@ -25,19 +25,31 @@ export async function GET(request: NextRequest) {
     const totalProducts = await Product.countDocuments();
     const totalOrders = await Order.countDocuments();
 
-    // Calculate total revenue
+    // Calculate total revenue with validation
     const revenueResult = await Order.aggregate([
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: '$totalAmount' }
+          totalRevenue: { $sum: '$totalAmount' },
+          avgOrderValue: { $avg: '$totalAmount' },
+          maxOrderValue: { $max: '$totalAmount' },
+          minOrderValue: { $min: '$totalAmount' }
         }
       }
     ]);
     const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+    const avgOrderValue = revenueResult[0]?.avgOrderValue || 0;
 
-    // Get monthly sales data using aggregation
+    // Get monthly sales data using aggregation (last 12 months)
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
     const monthlySales = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: twelveMonthsAgo }
+        }
+      },
       {
         $group: {
           _id: {
@@ -56,18 +68,21 @@ export async function GET(request: NextRequest) {
           _id: 0,
           year: '$_id.year',
           month: '$_id.month',
-          revenue: 1,
+          revenue: { $round: ['$revenue', 2] },
           orders: 1,
           monthName: {
-            $arrayElemAt: [
-              ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-              { $subtract: ['$_id.month', 1] }
+            $concat: [
+              {
+                $arrayElemAt: [
+                  ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                  { $subtract: ['$_id.month', 1] }
+                ]
+              },
+              ' ',
+              { $toString: '$_id.year' }
             ]
           }
         }
-      },
-      {
-        $limit: 12 // Last 12 months
       }
     ]);
 
@@ -110,7 +125,7 @@ export async function GET(request: NextRequest) {
       {
         $group: {
           _id: '$products.productId',
-          totalQuantity: { $sum: '$products.quantity' },
+          totalQuantity: { $sum: '$products.qty' },
           orderCount: { $sum: 1 }
         }
       },
@@ -141,7 +156,8 @@ export async function GET(request: NextRequest) {
         overview: {
           totalProducts,
           totalOrders,
-          totalRevenue,
+          totalRevenue: Math.round(totalRevenue * 100) / 100, // Round to 2 decimals
+          avgOrderValue: Math.round(avgOrderValue * 100) / 100,
         },
         monthlySales,
         recentOrders,

@@ -87,6 +87,7 @@ interface AnalyticsData {
     totalProducts: number;
     totalOrders: number;
     totalRevenue: number;
+    avgOrderValue?: number;
   };
   monthlySales: MonthlySale[];
   recentOrders: RecentOrder[];
@@ -229,41 +230,6 @@ export default function DashboardPage() {
           changeType="positive"
           icon="📊"
         />
-      </div>
-
-      {/* Sales Chart */}
-      <div className="bg-bg-card rounded-lg border border-border-light shadow-sm p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Monthly Revenue</h2>
-        {analytics.monthlySales.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics.monthlySales}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="monthName" 
-                stroke="#6B7280"
-                style={{ fontSize: '12px' }}
-              />
-              <YAxis 
-                stroke="#6B7280"
-                style={{ fontSize: '12px' }}
-                tickFormatter={(value) => `$${value}`}
-              />
-              <Tooltip 
-                formatter={(value: any) => [`$${value.toFixed(2)}`, 'Revenue']}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                }}
-              />
-              <Bar dataKey="revenue" fill="#4F8CFF" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-64 text-text-secondary">
-            No sales data available yet
-          </div>
-        )}
       </div>
 
       {/* Recent Orders and Top Products */}

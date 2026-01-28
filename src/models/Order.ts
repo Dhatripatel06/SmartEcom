@@ -3,12 +3,11 @@ import { IProduct } from './Product';
 
 export interface IOrderProduct {
   productId: mongoose.Types.ObjectId | IProduct;
-  quantity: number;
+  qty: number;
 }
 
 export interface IOrder extends Document {
   customerName: string;
-  customerEmail: string;
   products: IOrderProduct[];
   totalAmount: number;
   status: 'pending' | 'shipped' | 'delivered';
@@ -21,16 +20,6 @@ const OrderSchema: Schema = new Schema({
     required: [true, 'Customer name is required'],
     trim: true,
   },
-  customerEmail: {
-    type: String,
-    required: [true, 'Customer email is required'],
-    trim: true,
-    lowercase: true,
-    match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email address',
-    ],
-  },
   products: [
     {
       productId: {
@@ -38,7 +27,7 @@ const OrderSchema: Schema = new Schema({
         ref: 'Product',
         required: [true, 'Product ID is required'],
       },
-      quantity: {
+      qty: {
         type: Number,
         required: [true, 'Quantity is required'],
         min: [1, 'Quantity must be at least 1'],

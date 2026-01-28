@@ -34,6 +34,7 @@ interface AnalyticsData {
     totalProducts: number;
     totalOrders: number;
     totalRevenue: number;
+    avgOrderValue?: number;
   };
   monthlySales: MonthlySale[];
   recentOrders: RecentOrder[];
@@ -163,24 +164,36 @@ export default function AnalyticsPage() {
           <h2 className="text-xl font-semibold text-text-primary mb-4">Monthly Revenue Trend</h2>
           {analytics.monthlySales.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analytics.monthlySales}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <LineChart data={analytics.monthlySales} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                 <XAxis 
                   dataKey="monthName" 
                   stroke="#6B7280"
                   style={{ fontSize: '12px' }}
+                  tickLine={false}
                 />
                 <YAxis 
                   stroke="#6B7280"
                   style={{ fontSize: '12px' }}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  tickLine={false}
                 />
                 <Tooltip 
-                  formatter={(value: any) => [`$${value.toFixed(2)}`, 'Revenue']}
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                          <p className="text-sm font-semibold text-gray-700 mb-1">{payload[0].payload.monthName}</p>
+                          <p className="text-sm text-gray-600">
+                            Revenue: <span className="font-bold text-blue-600">{formatCurrency(payload[0].value as number)}</span>
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Orders: <span className="font-bold">{payload[0].payload.orders}</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
                 />
                 <Line 
@@ -189,7 +202,7 @@ export default function AnalyticsPage() {
                   stroke="#4F8CFF" 
                   strokeWidth={3}
                   dot={{ fill: '#4F8CFF', r: 5 }}
-                  activeDot={{ r: 7 }}
+                  activeDot={{ r: 7, fill: '#2563EB' }}
                 />
               </LineChart>
             </ResponsiveContainer>

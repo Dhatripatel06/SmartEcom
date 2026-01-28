@@ -114,86 +114,188 @@ A professional, production-ready admin dashboard for managing e-commerce operati
   - Staff role for basic access
   - Dropdown role selector in UI
 
-## 📋 Prerequisites
+---
 
-- Node.js 18+ installed
-- MongoDB installed locally OR MongoDB Atlas account
-- npm or yarn package manager
+## 🚀 Getting Started
 
-## 🛠️ Installation
+### Prerequisites
 
-1. **Clone the repository**
+Before you begin, ensure you have the following installed on your system:
+
+| Requirement | Version | Download Link |
+|------------|---------|---------------|
+| **Node.js** | 18.0 or higher | [nodejs.org](https://nodejs.org) |
+| **MongoDB** | 6.0 or higher | [mongodb.com/download](https://www.mongodb.com/try/download/community) |
+| **npm** | 9.0 or higher | Included with Node.js |
+
+**Optional:**
+- **MongoDB Atlas Account** - For cloud-hosted database ([Sign up free](https://www.mongodb.com/cloud/atlas/register))
+- **Cloudinary Account** - For image uploads ([Sign up free](https://cloudinary.com/users/register/free))
+
+---
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory and configure the following variables:
+
+```env
+# MongoDB Connection
+MONGODB_URI=mongodb://localhost:27017/smart-ecom
+
+# JWT Authentication Secret (use a strong random string)
+JWT_SECRET=your-super-secure-random-secret-key-change-this
+
+# Cloudinary Configuration (for image uploads)
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+```
+
+**Important Notes:**
+- **MONGODB_URI**: 
+  - Local: `mongodb://localhost:27017/smart-ecom`
+  - Atlas: `mongodb+srv://<username>:<password>@cluster.mongodb.net/smart-ecom`
+- **JWT_SECRET**: Generate a secure random string (minimum 32 characters recommended)
+- **Cloudinary Variables**: Optional, but required for product image uploads
+
+---
+
+### Installation Steps
+
+Follow these steps to get the project running locally:
+
+#### 1. Clone the Repository
 ```bash
 git clone <repository-url>
 cd smart-ecom
 ```
 
-2. **Install dependencies**
+#### 2. Install Dependencies
 ```bash
 npm install
 ```
 
-3. **Setup MongoDB**
+This will install all required packages including:
+- Next.js 14
+- React 18
+- TypeScript
+- MongoDB & Mongoose
+- Tailwind CSS
+- Recharts (for analytics)
+- bcryptjs (for password hashing)
+- jsonwebtoken (for authentication)
+
+#### 3. Configure Environment
+```bash
+# Create environment file
+cp .env.example .env.local
+
+# Edit .env.local with your actual values
+```
+
+#### 4. Verify MongoDB Connection
 
 **Option A: Local MongoDB**
-- Install MongoDB Community Edition
-- Start MongoDB service:
-  ```bash
-  mongod
-  ```
-
-**Option B: MongoDB Atlas (Cloud)**
-- Create account at [mongodb.com/atlas](https://mongodb.com/atlas)
-- Create a cluster and get connection string
-- Replace `MONGODB_URI` in `.env.local`
-
-4. **Configure Environment Variables**
-
-Copy `.env.example` to `.env.local`:
 ```bash
-cp .env.example .env.local
+# Start MongoDB service
+mongod
+
+# Verify it's running (in another terminal)
+mongosh
 ```
 
-Update `.env.local` with your values:
-```env
-MONGODB_URI=mongodb://localhost:27017/smart-ecom
-JWT_SECRET=your-secure-random-secret-key
-```
+**Option B: MongoDB Atlas**
+- Create a cluster at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+- Get your connection string
+- Update `MONGODB_URI` in `.env.local`
 
-5. **Start Development Server**
-```bash
-npm run dev
-```
+#### 5. Seed the Database
 
-Visit: [http://localhost:3000](http://localhost:3000)
-
-## 🌱 Database Seeding
-
-**Quick Start with Test Data:**
+Run the seed script to populate your database with sample data:
 
 ```bash
-# Install dependencies (if not already done)
-npm install
-
-# Run the seed script
 npm run seed
 ```
 
-This will populate your database with:
-- ✅ **3 Users** (1 admin + 2 staff)
-- ✅ **4 Categories** (Electronics, Fashion, Home & Kitchen, Books)
-- ✅ **12 Products** (with realistic prices and stock)
-- ✅ **8 Orders** (with various statuses and dates)
+**What gets seeded:**
+- ✅ 3 Users (1 admin, 2 staff members)
+- ✅ 4 Product Categories
+- ✅ 12 Sample Products with images
+- ✅ 8 Sample Orders with various statuses
 
-**Test Login Credentials:**
+**Default Admin Credentials:**
 ```
 Email: admin@smartecom.com
 Password: admin123
 ```
 
-📚 **Full Documentation:** See [src/scripts/README.md](src/scripts/README.md) for detailed seed script documentation.
+> 💡 **Tip:** The seed script is located at `src/scripts/seed.ts`. See [src/scripts/README.md](src/scripts/README.md) for more details.
 
-⚠️ **Note:** The seed script clears existing data before seeding. Only use in development!
+⚠️ **Warning:** The seed script clears all existing data. Only use in development environments!
+
+---
+
+### Development Commands
+
+#### Start Development Server
+```bash
+npm run dev
+```
+Opens at [http://localhost:3000](http://localhost:3000)
+
+#### Build for Production
+```bash
+npm run build
+```
+Creates an optimized production build in `.next/` directory
+
+#### Start Production Server
+```bash
+npm start
+```
+Runs the production build (requires `npm run build` first)
+
+#### Run Seed Script
+```bash
+npm run seed
+```
+Populates database with test data
+
+#### Type Checking
+```bash
+npm run type-check
+```
+Runs TypeScript compiler without emitting files
+
+---
+
+### Quick Start Guide
+
+**Get up and running in 5 minutes:**
+
+1. **Install & Configure**
+   ```bash
+   npm install
+   cp .env.example .env.local
+   # Edit .env.local with your MongoDB URI and JWT_SECRET
+   ```
+
+2. **Seed Database**
+   ```bash
+   npm run seed
+   ```
+
+3. **Start Development**
+   ```bash
+   npm run dev
+   ```
+
+4. **Login to Dashboard**
+   - Navigate to [http://localhost:3000/login](http://localhost:3000/login)
+   - Use credentials: `admin@smartecom.com` / `admin123`
+   - Explore the dashboard!
+
+---
 
 ## 📁 Project Structure
 
@@ -600,7 +702,7 @@ This project is created for educational purposes as part of an academic assignme
 
 ## 👨‍💻 Developer
 
-Developed by [Your Name]  
+Developed by [Dhatri patel]  
 GitHub: [github.com/Dhatripatel06/SmartEcom](https://github.com/Dhatripatel06/SmartEcom)  
 Contact: dhatripatel67@gmail.com
 
